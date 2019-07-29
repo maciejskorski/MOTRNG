@@ -359,12 +359,14 @@ class MarkovNode:
     - childs : list of childs [Node, probability of transition]
     - name : name of the node
     - count : counter (for algorithmic purpose)
+    - newprob : is used to update the probability of the Node
     """
-    def __init__(self, prob=None, childs=[], name='', count=0):
+    def __init__(self, prob=None, childs=[], name='', count=0, newprob=0):
         self.prob = prob
         self.childs = childs
         self.name = name
         self.count = count
+        self.newprob = newprob
 
     def __repr__(self):
         repr = "["+self.name+","
@@ -476,6 +478,56 @@ class Info:
             matrix[i][self.listnodesname.index(str1)]=mynode.childs[1][1]
         self.matrix=matrix
 
+    """
+    Compute the advance of a Markov chain
+    INPUT :
+        self : an markov chain 
+
+    OUTPUT : 
+        self : with state updated
+    """
+    def advance(self):
+        for i in self.listnodes:
+            i.newprob = 0
+        for i in self.listnodes:
+            for j in i.childs
+                j[0].newprob = j[0].newprob + i.prob*j[1]
+        for i in self.listnodes:
+            i.prob = i.newprob
+        return 1       
+
+    """
+    Compute stable state
+    INPUT :
+        self : an markov chain 
+
+    OUTPUT : 
+    self : stable state computed
+    """
+    def stablestate(self,precision=0.001, debug = False):
+        if len(self.listnodes)==1:
+            self.listnodes[0].prob =1
+        else:
+            self.listnodes[0].prob=1
+            for i in range(1,len(self.listnodes)):
+                self.listnodes[i].prob=0
+            flag = True
+            while(flag):
+                mem = [ self.listnodes[i].prob for i in range(len(self.listnodes))]
+                self.advance()
+                flag=False
+                for i in range(self.listnodes):
+                    if abs(self.listnodes[i].prob - mem[i]) > precision:
+                        flag = True
+
+            if debug:
+                mem = [ self.listnodes[i].prob for i in range(len(self.listnodes))]
+                self.stablestate()
+                for i in range(self.listnodes):
+                    if abs(self.listnodes[i].prob - mem[i]) > 2*precision:
+                        print "Errror"
+
+            return 1
 
     """
     Compute stable state
@@ -502,7 +554,7 @@ class Info:
 
             for i in range (len(self.listnodes)):
                 self.listnodes[i].prob = n[self.listnodesname.index(self.listnodes[i].name)]
-            return n
+            return 1
 
     """
     Compute the entropy of a Markov chain
@@ -684,7 +736,7 @@ def trng_entropy(alpha, f, memory, nxor, qualityfactor, debug=False):
                 info = Info([], [], None, None)
                 node = info.treetomarkov(listleaves)
                 
-                n=info.stablestate()
+                n=info.stablestate(precision=0.001, debug = True)
 
                 if debug:
                     print info.listnodes
