@@ -5,7 +5,7 @@ from math import *
 
 from source_mod_time import *
 
-alpha=0.5
+alpha=[0.5]
 memory = 4
 
 
@@ -22,4 +22,5 @@ ratio_slope = [5.0, 3.89, 3.52, 3.13, 2.44, 2.06, 1.86, 3.85, 3.66, 3.01, 2.47, 
 facteur = 10**-7
 ratio_pente = [facteur * i for i in ratio_slope]
 
-print find_waiting_time(alpha, f, memory, 14, ratio_pente, [8000, 15000], 0.997, 0.001, True)
+print find_waiting_time(alpha, f, memory, 14, ratio_pente, [8000, 15000], 0.997, 0.001,
+        True)

@@ -490,7 +490,7 @@ class Info:
         for i in self.listnodes:
             i.newprob = 0
         for i in self.listnodes:
-            for j in i.childs
+            for j in i.childs:
                 j[0].newprob = j[0].newprob + i.prob*j[1]
         for i in self.listnodes:
             i.prob = i.newprob
@@ -513,19 +513,19 @@ class Info:
                 self.listnodes[i].prob=0
             flag = True
             while(flag):
-                mem = [ self.listnodes[i].prob for i in range(len(self.listnodes))]
+                mem = [ self.listnodes[j].prob for j in range(len(self.listnodes))]
                 self.advance()
                 flag=False
-                for i in range(self.listnodes):
+                for i in range(len(self.listnodes)):
                     if abs(self.listnodes[i].prob - mem[i]) > precision:
                         flag = True
 
             if debug:
                 mem = [ self.listnodes[i].prob for i in range(len(self.listnodes))]
-                self.stablestate()
-                for i in range(self.listnodes):
+                self.stablestateslow()
+                for i in range(len(self.listnodes)):
                     if abs(self.listnodes[i].prob - mem[i]) > 2*precision:
-                        print "Errror"
+                        print "Error"
 
             return 1
 
@@ -696,10 +696,13 @@ def trng_entropy(alpha, f, memory, nxor, qualityfactor, debug=False):
 
         info = Info([], [], None, None)
         node = info.treetomarkov(listleaves)
-        n=info.stablestate()
 
         if debug:
+            n=info.stablestate(precision = 0.001, debug = True)
             print info.listnodes
+        else:
+            n=info.stablestate()
+
 
         xorn = info.nmarkovxor(nxor)
 
@@ -736,10 +739,13 @@ def trng_entropy(alpha, f, memory, nxor, qualityfactor, debug=False):
                 info = Info([], [], None, None)
                 node = info.treetomarkov(listleaves)
                 
-                n=info.stablestate(precision=0.001, debug = True)
 
                 if debug:
+                    n=info.stablestate(precision=0.001, debug = True)
                     print info.listnodes
+                else:
+                    n=info.stablestate()
+
 
                 if i == 0:
                     xorn = info
