@@ -63,7 +63,7 @@ class TimeFunction:
         - f a time function
     OUTPUT :
     if prov = True
-        - min, max an interval such that sum_[min, max] f \in [min, max]
+        - dmin, dmax an interval such that sum_[min, max] f \in [dmin, dmax]
     else
         - sum_[min, max] f
     """
@@ -84,6 +84,21 @@ class TimeFunction:
             return my_sum_min*self.scale, my_sum_max*self.scale
         else:
             return my_sum*self.scale
+
+    """
+    Compute the entropy of a time function
+    INPUT : 
+        - f a time function
+    OUTPUT :
+        - sum_[min, max] f log f dx
+    """
+    def TFentropy(self, fact=1):
+        l = (self.max-self.min)/float(self.prec)
+        my_sum =0
+        for i in range(len(self.val)):
+            prob = self.val[i]*l 
+            my_sum = my_sum + prob * log(prob)/log(2)    
+        return my_sum*self.scale*fact
 
     """
     Compute the product of two times functions
