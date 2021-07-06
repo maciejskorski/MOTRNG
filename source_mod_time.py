@@ -671,18 +671,19 @@ class Info:
                     ntimes = double
                 else:
                     ntimes = double.markovxor(ntimes)
-            double = double.markovxor(double)
             n=n/2
+            if n > 0:
+                double = double.markovxor(double)
         return ntimes
 
 
 """
 Compute the entropy of a TRNG obtain the n times the xor of the same elementary TRNG
 INPUT :
-    - alpha : the duty cycle of the elementary TRNG
+    - alpha : a list the duty cycle of the elementary TRNG
     - f : distribution of probability representing the knowledge of the attacker at the
       begining
-    - memory : the memory of the markov chain that simulate the elementary TRNG
+    - memory >= 1: the memory of the markov chain that simulate the elementary TRNG
     - nxor : number of branchs of elementary TRNG which are xored
     - qualityfactor : list of quality factor (if len de this list is 1 then we compute the
       xor of nxor elementary TRNG)
