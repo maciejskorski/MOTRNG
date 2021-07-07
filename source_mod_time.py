@@ -714,8 +714,10 @@ def trng_entropy(alpha, f, memory, nxor, qualityfactor, debug=False):
         node = info.treetomarkov(listleaves)
 
         if debug:
+            print("toto")
             n=info.stablestate(precision = 0.001, debug = True)
             print info.listnodes
+            print("tata")
         else:
             n=info.stablestate()
 
