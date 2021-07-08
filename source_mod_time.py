@@ -309,17 +309,17 @@ class TreeNode:
     """Init Tree class
     INPUT :
     - timefunction : a time function
-    - depth : depth of the node (number of steps from root)
+    - depth : integer depth of the node (number of steps from root)
     - parent : parent node (None for root)
     - childs : list of childs
-    - str : name of the node
+    - str : an integer name of the node
     """
-    def __init__(self, timefunction, depth=0, parent=None, childs=[],mstr=''):
+    def __init__(self, timefunction, depth=0, parent=None, childs=[],label):
         self.tf=timefunction
         self.depth = depth
         self.parent = parent
         self.childs = childs
-        self.str = mstr
+        self.label = label
 
     """
     Build recurcively a tree to represent the markov chain associated to a TRNG
@@ -334,89 +334,39 @@ class TreeNode:
         g : evoluation law
 
     """
-    def buildtree(self, finaldepth, s0,s1,g, listleaves):
+    def buildtree(self, finaldepth, s0,s1,g, listleaves, epsilon=1, plot=FALSE):
         f=self.tf
         depth = self.depth
-        name = "temp/test" + self.str +".txt"
-        f.TFplot(name)
+        if plot:
+            name = "temp/test" + str(self.label) +".txt"
+            f.TFplot(name)
         if depth == finaldepth:
             prob_min, prob_max = f.TFsum(True)
+            if (prob_max-prob_min)>epsilon:
+                print("Warining the precision is not good enouth")
             moy=(prob_min+prob_max)/2
             if moy > 0.5:
                 if prob_max > 1:
                     prob_max = 1
-                listleaves.append([self.str, prob_max])
+                listleaves.append([self.label, prob_max])
             else:
                 if prob_min > 1:
                     prob_min = 1
-                listleaves.append([self.str, prob_min])
+                listleaves.append([self.label, prob_min])
         else:
             mysum = f.TFsum()
             f.scale = f.scale/mysum
             f=f.TFconv(g)
-            f.TFplot("temp/graph1.txt")
-            g.TFplot("temp/graph.txt")
+            if plot:
+                f.TFplot("temp/graph1.txt")
+                g.TFplot("temp/graph.txt")
 
             f0=f.TFprod(s0)
             f1=f.TFprod(s1)
-            self.childs=[ TreeNode(f0, depth+1, self,[], self.str+'0'), TreeNode(f1, depth+1,
-                self,[],self.str+'1')]
+            self.childs=[ TreeNode(f0, depth+1, self,[], 2*self.label), TreeNode(f1, depth+1,
+                self,[],2*self.label+1)]
             self.childs[0].buildtree(finaldepth, s0, s1, g, listleaves)
             self.childs[1].buildtree(finaldepth, s0, s1, g, listleaves)
-
-"""
-Markov chain class
-"""
-class MarkovNode:
-    """
-    INPUT : 
-    - prob : probability of the Node
-    - childs : list of childs [Node, probability of transition]
-    - name : name of the node
-    - count : counter (for algorithmic purpose)
-    - newprob : is used to update the probability of the Node
-    """
-    def __init__(self, prob=None, childs=[], name='', count=0, newprob=0):
-        self.prob = prob
-        self.childs = childs
-        self.name = name
-        self.count = count
-        self.newprob = newprob
-
-    def __repr__(self):
-        repr = "["+self.name+","
-        if self.prob == None:
-            repr = repr + "None"
-        else:
-            repr = repr + str(self.prob)
-        if len(self.childs) != 2:
-            repr = repr + "]"
-        else:
-            repr = repr + ",["+self.childs[0][0].name + ","+str(self.childs[0][1])+"],["+self.childs[1][0].name+","+str(self.childs[1][1])+"]]"
-        return repr 
-
-    """
-    Compute a list of nodes
-    """
-    def __listnodes(self, listnodesname, listnodes,count):
-        if node.count < count:
-            listnodesname.append(node.name)
-            listnodes.append(node)
-            node.count = count
-            for i in range(2):
-                listnodes(node.childs[i][0], listnodesnames, listnodes, count)
-
-    """
-    Compute a list of nodes
-    """
-    def listnodes(self):
-        listnodesnames=[]
-        listnodes=[]
-        count =self.count +1
-        self.__listnodes(listnodesname, listnodes, count)
-        return listnodesnames, listnodes
-
-
 
 """
 Information source class
@@ -425,73 +375,55 @@ class Info:
     """
     Class Info init
     INPUT :
-    - listnode : list of nodes
-    - listnodesnames : list of nodes names corresponding to listnode
-    - matrix : probability transition matrix
-    - node : root node
+    - mem : memory of the Markov chain
+    - listlongstates : list of probability of memory+1 patterns
     """
-    def __init__(self, listnodes=[], listnodesname=[], matrix=None, node=None):
-        self.listnodes = listnodes
-        self.listnodesname=listnodesname
-        self.matrix=matrix
-        self.node=node
+    def __init__(self, mem, longstates):
+        self.mem
+        self.ls=longstates
 
     """
     Build a markov chain from a tree
     INPUT :
-        self : an markov chain 
+        self : a markov chain
+        listleaves : list of pairs [n,x] where n is mem+1 lenght pattern and x is its
+        probability
 
     OUTPUT : 
-    self : with listnodes and listnodesname computed
+    self : with trans computed
     """
     def treetomarkov(self, listleaves):
         epsilon=0.1
-        for i in range(len(listleaves)): #create all the nodes
-            nameleave = listleaves[i][0]
-            newname = nameleave[:len(nameleave)-1]
-            if not(newname in self.listnodesname):
-                self.listnodesname.append(newname)
-                node = MarkovNode(None, [], newname,0)
-                self.listnodes.append(node)
 
-        for i in range(len(self.listnodes)): #create transitions
-            name = self.listnodes[i].name
-            for j in range(2):
-                leavename = name+str(j)
-                for k in range(len(listleaves)):
-                    if listleaves[k][0] == leavename:
-                        nextnode = self.listnodes[self.listnodesname.index(leavename[1:])]
-                        if j==0:
-                            self.listnodes[i].childs.append([nextnode,listleaves[k][1]])
-                        else:
-                            prob = self.listnodes[i].childs[0][1]
-                            if abs(listleaves[k][1]+ prob-1) > epsilon:
-                                print "Warning probability between childs of state"
-                                print abs(listleaves[k][1]+ prob-1), listleaves[k][1]
-                            self.listnodes[i].childs.append([nextnode,1-prob])
-
-        for i in range(len(self.listnodes)):
-            if self.listnodes[i].name == '0'*(len(listleaves[0][0])-1):
-                self.node= self.listnodes[i]
-
+        self.transstates = [0]*2**(self.mem+1)
+        for list in listleaves:
+            self.ls[list[0]]=float(list[1])
+        return 1
     """
-    Compute the matrix associated to a Markov chain
+    Compute 
     INPUT :
         self : an markov chain 
+        state : state
 
     OUTPUT : 
-    self : matrix computed
+    the probability of the state
     """
-    def markovtomatrix(self):
-        matrix=[]
-        for i in range(len(self.listnodes)):
-            matrix.append([0]*len(self.listnodes))
-            mynode=self.listnodes[i]
-            str0=mynode.childs[0][0].name
-            str1=mynode.childs[1][0].name
-            matrix[i][self.listnodesname.index(str0)]=mynode.childs[0][1]
-            matrix[i][self.listnodesname.index(str1)]=mynode.childs[1][1]
-        self.matrix=matrix
+    def proba_state(self, s):
+        return self.ls[s*2].self.ls[s*2+1]
+
+    """
+    Compute 
+    INPUT :
+        self : an markov chain 
+        state : state
+        b=0,1 : a transition
+
+    OUTPUT : 
+    the probability of transition of the state
+    """
+    def proba_trans(self, s,b):
+        proba_state = self.proba_state(s)
+        return self.ls[2*s +b]/proba_state
 
     """
     Compute the advance of a Markov chain
@@ -502,13 +434,15 @@ class Info:
         self : with state updated
     """
     def advance(self):
-        for i in self.listnodes:
-            i.newprob = 0
-        for i in self.listnodes:
-            for j in i.childs:
-                j[0].newprob = j[0].newprob + i.prob*j[1]
-        for i in self.listnodes:
-            i.prob = i.newprob
+        new_proba = [0]*2**(self.mem+1)
+        for state in range(2**(self.mem-1)):
+            prec_state1= state/2+2^self.mem
+            prec_state0 = state/2
+            trans = state % 2
+            new_proba_state = self.proba(prec_state0)*self.proba_trans(prec_state0,trans)+self.proba(prec_state1)*self.proba_trans(prec_state1,trans)
+            new_proba[2*state]=new_proba_state*self.proba_trans(2*state)
+            new_proba[2*state+1]=new_proba_state*self.proba_trans(2*state+1)
+        self.ls = new_proba
         return 1       
 
     """
@@ -520,55 +454,14 @@ class Info:
     self : stable state computed
     """
     def stablestate(self,precision=0.001, debug = False):
-        if len(self.listnodes)==1:
-            self.listnodes[0].prob =1
-        else:
-            self.listnodes[0].prob=1
-            for i in range(1,len(self.listnodes)):
-                self.listnodes[i].prob=0
-            flag = True
-            while(flag):
-                mem = [ self.listnodes[j].prob for j in range(len(self.listnodes))]
+        flag = True
+        while(flag):
+            mem = [ self.ls[j] for j in range(len(self.ls))]
                 self.advance()
                 flag=False
-                for i in range(len(self.listnodes)):
-                    if abs(self.listnodes[i].prob - mem[i]) > precision:
+                for i in range(len(self.ls)):
+                    if abs(self.ls[i] - mem[i]) > precision:
                         flag = True
-
-            if debug:
-                mem = [ self.listnodes[i].prob for i in range(len(self.listnodes))]
-                self.stablestateslow()
-                for i in range(len(self.listnodes)):
-                    if abs(self.listnodes[i].prob - mem[i]) > 2*precision:
-                        print "Error"
-
-            return 1
-
-    """
-    Compute stable state
-    INPUT :
-        self : an markov chain 
-
-    OUTPUT : 
-    self : stable state computed
-    """
-    def stablestateslow(self,precision=0.001):
-        if len(self.listnodes)==1:
-            self.listnodes[0].prob =1
-        else:
-            if self.matrix == None:
-                self.markovtomatrix()
-            m= np.array(self.matrix)
-            n1=np.array([float(0)]*len(self.matrix))
-            n1[0]=1
-            n=np.array([float(0)]*len(self.matrix))
-
-            while max([ abs(n[i] - n1[i]) for i in range(len(self.matrix))]) > precision:
-                n=n1
-                n1=n.dot(m)
-
-            for i in range (len(self.listnodes)):
-                self.listnodes[i].prob = n[self.listnodesname.index(self.listnodes[i].name)]
             return 1
 
     """
@@ -576,87 +469,29 @@ class Info:
     """
     def entropy(self):
         sum=0
-        nan_flag=False
-        for i in range(len(self.listnodes)):
-            p=self.listnodes[i].childs[0][1]
+        for state in range(2**self.mem):
+            p=self.proba_trans(state,0))
             if (p<=0) or (p>=1):
                 ent = 0
             else:
                 ent = -p * log(p)/log(2) - (1-p)* log(1-p)/log(2)
-            sum=sum + self.listnodes[i].prob*ent
+            sum=sum + self.proba(state)*ent
         return sum
 
     """
     Compute the xor of two Markov chains
     """
     def markovxor(self, b):
-        precision = 0.1
-        """
-        xor two str names
-        """
-        def strxor(str1, str2):
-            str3=''
-            for i in range(len(str1)):
-                str3=str3+ str((int(str1[i]) + int(str2[i]))%2)
-            return str3
 
+        proba_ls = [0]*(2^(self.mem+1))
 
-        listpairs=[] #list of pairs of nodes of Markov chains
-        for i in range(len(self.listnodes)):
-            for j in range(len(b.listnodes)):
-                listpairs.append([self.listnodes[i], b.listnodes[j]])
-        
-        listnodexor= [] #list of pairs of nodes which projects to the same node of the xor
-        #Markov chain
-        xor = Info([], [], None, None) # the result
-        for i in range(len(listpairs)): #compute the names of states of the xor Markov chain
-            pair = listpairs[i]
-            namexor=strxor(pair[0].name, pair[1].name)
-            if not(namexor in xor.listnodesname):
-                xor.listnodesname.append(namexor)
-                listnodexor.append([ pair])
-            else:
-                ind = xor.listnodesname.index(namexor)
-                listnodexor[ind].append(pair)
-        xor.listnodes=[] #list of nodes of the xor Markov chain
-        for i in range(len(xor.listnodesname)): #compute the nodes of the xor Markov chain
-            node = MarkovNode(None,[], xor.listnodesname[i], 0)
-            sum =0.0
-            for j in range(len(listnodexor[i])):
-                sum = sum + listnodexor[i][j][0].prob * listnodexor[i][j][1].prob
-            node.prob=sum
-            xor.listnodes.append(node)
-        for i in range(len(xor.listnodesname)): #compute the probabilities of the childs
-            name = xor.listnodes[i].name
-            newnode = []
-            for j in range(2):
-                if len(name)>1:
-                    newname = name[1:len(name)]+str(j)
-                else:
-                    newname = ''
-                newnode.append(xor.listnodes[xor.listnodesname.index(newname)])
-            sum=[0.0,0.0]
-            sum1 =0
-            for k in range(len(listnodexor[i])):
-                nodek = listnodexor[i][k]
-                prob = listnodexor[i][k][0].prob*listnodexor[i][k][1].prob
-                sum1= sum1 + prob
-                childprob=[]
-                childprob.append(listnodexor[i][k][0].childs[0][1]*listnodexor[i][k][1].childs[0][1]+listnodexor[i][k][0].childs[1][1] *listnodexor[i][k][1].childs[1][1])
-                    
-                childprob.append(listnodexor[i][k][0].childs[0][1] *
-                        listnodexor[i][k][1].childs[1][1] +
-                        listnodexor[i][k][0].childs[1][1] *
-                        listnodexor[i][k][1].childs[0][1])
-                sum = [sum[0] + prob*childprob[0], sum[1] + prob*childprob[1]]
+        for s in range(len(self.ls)):
+            sum = 0
+            for s1 in range(len(self.ls)):
+                sum = sum + self.ls[s1 ^ s]*b.ls[s1]
+            proba_ls[s]=sum
+        xor = Info(self.mem, proba_ls)
 
-            sum = [sum[0]/xor.listnodes[i].prob, sum[1]/xor.listnodes[i].prob]
-            if abs(sum[0]+sum[1]-1) > precision:
-                print "Error ", abs(sum[0]+sum[1]-1), " greater than", precision
-            else:
-                xor.listnodes[i].childs.append([newnode[0], sum[0]])
-                xor.listnodes[i].childs.append([newnode[1], 1-sum[0]])
-        xor.stablestate()
         return xor
 
     """
