@@ -314,7 +314,7 @@ class TreeNode:
     - childs : list of childs
     - str : an integer name of the node
     """
-    def __init__(self, timefunction, depth=0, parent=None, childs=[],label):
+    def __init__(self, timefunction, depth=0, parent=None, childs=[],label=0):
         self.tf=timefunction
         self.depth = depth
         self.parent = parent
@@ -334,8 +334,9 @@ class TreeNode:
         g : evoluation law
 
     """
-    def buildtree(self, finaldepth, s0,s1,g, listleaves, epsilon=1, plot=FALSE):
+    def buildtree(self, finaldepth, s0,s1,g, listleaves, epsilon=0.1, plot=False):
         f=self.tf
+        listleaves = [float(0)]*(2**filnaldepth)
         depth = self.depth
         if plot:
             name = "temp/test" + str(self.label) +".txt"
@@ -348,11 +349,11 @@ class TreeNode:
             if moy > 0.5:
                 if prob_max > 1:
                     prob_max = 1
-                listleaves.append([self.label, prob_max])
+                listleaves[self.label]=prob_max
             else:
                 if prob_min > 1:
                     prob_min = 1
-                listleaves.append([self.label, prob_min])
+                listleaves[self.label]=prob_min
         else:
             mysum = f.TFsum()
             f.scale = f.scale/mysum
@@ -392,12 +393,11 @@ class Info:
     OUTPUT : 
     self : with trans computed
     """
-    def treetomarkov(self, listleaves):
-        epsilon=0.1
+    def treetomarkov(self, listleaves, epsilon=0.01):
 
         self.transstates = [0]*2**(self.mem+1)
         for list in listleaves:
-            self.ls[list[0]]=float(list[1])
+            self.ls[list[0]]=float(list[1]*2**(-self.mem))
         return 1
     """
     Compute 
@@ -457,11 +457,11 @@ class Info:
         flag = True
         while(flag):
             mem = [ self.ls[j] for j in range(len(self.ls))]
-                self.advance()
-                flag=False
-                for i in range(len(self.ls)):
-                    if abs(self.ls[i] - mem[i]) > precision:
-                        flag = True
+            self.advance()
+            flag=False
+            for i in range(len(self.ls)):
+                if abs(self.ls[i] - mem[i]) > precision:
+                    flag = True
             return 1
 
     """
@@ -470,7 +470,7 @@ class Info:
     def entropy(self):
         sum=0
         for state in range(2**self.mem):
-            p=self.proba_trans(state,0))
+            p=self.proba_trans(state,0)
             if (p<=0) or (p>=1):
                 ent = 0
             else:
