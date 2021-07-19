@@ -336,7 +336,9 @@ class TreeNode:
     """
     def buildtree(self, finaldepth, s0,s1,g, listleaves, epsilon=0.1, plot=False):
         f=self.tf
-        listleaves = [float(0)]*(2**filnaldepth)
+        if type(listleaves) != list or len(listleaves) < 2**finaldepth:
+            for i in range(2**finaldepth):
+                listleaves.append(0)
         depth = self.depth
         if plot:
             name = "temp/test" + str(self.label) +".txt"

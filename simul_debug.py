@@ -26,7 +26,7 @@ g = TimeFunction(0,1,precision, 1)
 g.TFgaussian(0, 0.02)
 
 root = TreeNode(f)
-listleaves=[]
-root.buildtree(memory,s0,s1,g,listleaves)
-print listleaves
+ll = []
+root.buildtree(memory,s0,s1,g,ll)
+print(ll)
 
