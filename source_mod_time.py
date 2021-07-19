@@ -321,6 +321,14 @@ class TreeNode:
         self.childs = childs
         self.label = label
 
+    def __str__(self):
+        mystr='['
+        for i in range(2**(self.mem+1)):
+            mystr = mystr + str(self.ls[i]) + ','
+        mystr = mystr+']'
+    return mystr
+
+
     """
     Build recurcively a tree to represent the markov chain associated to a TRNG
     INPUT :

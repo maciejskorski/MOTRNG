@@ -33,4 +33,5 @@ myinfo = Info(memory, [])
 myinfo.treetomarkov(ll)
 for i in range(2**myinfo.mem):
     print(myinfo.proba_state(i))
+print(myinfo)
 print(myinfo.entropy())
