@@ -6,7 +6,7 @@ from math import *
 from source_mod_time import *
 
 alpha=0.5
-memory = 10
+memory = 4
 precision = 1000
 
 
@@ -27,6 +27,10 @@ g.TFgaussian(0, 0.02)
 
 root = TreeNode(f)
 ll = []
-root.buildtree(memory,s0,s1,g,ll)
+root.buildtree(memory+1,s0,s1,g,ll)
 print(ll)
-
+myinfo = Info(memory, [])
+myinfo.treetomarkov(ll)
+for i in range(2**myinfo.mem):
+    print(myinfo.proba_state(i))
+print(myinfo.entropy())

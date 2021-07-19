@@ -334,7 +334,7 @@ class TreeNode:
         g : evoluation law
 
     """
-    def buildtree(self, finaldepth, s0,s1,g, listleaves, epsilon=0.1, plot=False):
+    def buildtree(self, finaldepth, s0,s1,g, listleaves, epsilon=0.05, plot=False):
         f=self.tf
         if type(listleaves) != list or len(listleaves) < 2**finaldepth:
             for i in range(2**finaldepth):
@@ -346,6 +346,7 @@ class TreeNode:
         if depth == finaldepth:
             prob_min, prob_max = f.TFsum(True)
             if (prob_max-prob_min)>epsilon:
+                print(prob_max-prob_min)
                 print("Warining the precision is not good enouth")
             moy=(prob_min+prob_max)/2
             if moy > 0.5:
@@ -381,9 +382,10 @@ class Info:
     - mem : memory of the Markov chain
     - listlongstates : list of probability of memory+1 patterns
     """
-    def __init__(self, mem, longstates):
-        self.mem
+    def __init__(self, mem, longstates, stable_state = False):
+        self.mem = mem
         self.ls=longstates
+        self.stable_state = stable_state
 
     """
     Build a markov chain from a tree
@@ -395,11 +397,16 @@ class Info:
     OUTPUT : 
     self : with trans computed
     """
-    def treetomarkov(self, listleaves, epsilon=0.01):
+    def treetomarkov(self, listleaves, check=True, epsilon=0.01):
+        self.ls = []
+        for i in range(2**(self.mem+1)):
+            if check and i % 2 == 1:
+                self.ls.append(float(listleaves[i-1])*2**(-self.mem))
+                self.ls.append(2**(-self.mem)*(1-float(listleaves[i-1])))
+                if abs(listleaves[i] + listleaves[i-1] -1) > epsilon:
+                    print(abs(listleaves[i] + listleaves[i-1] -1))
+                    print("Warining the precision is not good enouth")
 
-        self.transstates = [0]*2**(self.mem+1)
-        for list in listleaves:
-            self.ls[list[0]]=float(list[1]*2**(-self.mem))
         return 1
     """
     Compute 
@@ -411,7 +418,7 @@ class Info:
     the probability of the state
     """
     def proba_state(self, s):
-        return self.ls[s*2].self.ls[s*2+1]
+        return self.ls[s*2]+self.ls[s*2+1]
 
     """
     Compute 
@@ -441,9 +448,9 @@ class Info:
             prec_state1= state/2+2^self.mem
             prec_state0 = state/2
             trans = state % 2
-            new_proba_state = self.proba(prec_state0)*self.proba_trans(prec_state0,trans)+self.proba(prec_state1)*self.proba_trans(prec_state1,trans)
-            new_proba[2*state]=new_proba_state*self.proba_trans(2*state)
-            new_proba[2*state+1]=new_proba_state*self.proba_trans(2*state+1)
+            new_proba_state = self.proba_state(prec_state0)*self.proba_trans(prec_state0,trans)+self.proba_state(prec_state1)*self.proba_trans(prec_state1,trans)
+            new_proba[2*state]=new_proba_state*self.proba_trans(state,0)
+            new_proba[2*state+1]=new_proba_state*self.proba_trans(state,1)
         self.ls = new_proba
         return 1       
 
@@ -457,19 +464,25 @@ class Info:
     """
     def stablestate(self,precision=0.001, debug = False):
         flag = True
+        cpt = 0
         while(flag):
+            cpt = cpt+1
+            print(cpt)
             mem = [ self.ls[j] for j in range(len(self.ls))]
             self.advance()
             flag=False
             for i in range(len(self.ls)):
                 if abs(self.ls[i] - mem[i]) > precision:
                     flag = True
-            return 1
+        self.stable_state= True
+        return 1
 
     """
     Compute the entropy of a Markov chain
     """
     def entropy(self):
+        if not(self.stable_state):
+            self.stablestate()
         sum=0
         for state in range(2**self.mem):
             p=self.proba_trans(state,0)
@@ -477,7 +490,7 @@ class Info:
                 ent = 0
             else:
                 ent = -p * log(p)/log(2) - (1-p)* log(1-p)/log(2)
-            sum=sum + self.proba(state)*ent
+            sum=sum + self.proba_state(state)*ent
         return sum
 
     """
