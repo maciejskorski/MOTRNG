@@ -11,8 +11,7 @@ precision = 1000
 
 
 f = TimeFunction(0,1,precision, 1)
-f.TFsquare(alpha)
-f.scale = 2
+f.TFconst(1)
 
 s1 = TimeFunction(0,1,precision, 1)
 s1.TFsquare(alpha)
@@ -28,10 +27,9 @@ g.TFgaussian(0, 0.02)
 root = TreeNode(f)
 ll = []
 root.buildtree(memory+1,s0,s1,g,ll)
+print("ll")
 print(ll)
 myinfo = Info(memory, [])
 myinfo.treetomarkov(ll)
-for i in range(2**myinfo.mem):
-    print(myinfo.proba_state(i))
-print(myinfo)
 print(myinfo.entropy())
+print(myinfo)

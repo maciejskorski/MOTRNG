@@ -442,7 +442,10 @@ class Info:
     """
     def proba_trans(self, s,b):
         proba_state = self.proba_state(s)
-        return self.ls[2*s +b]/proba_state
+        if proba_state != 0:
+            return self.ls[2*s +b]/proba_state
+        else:
+            return 0
 
     """
     Compute the advance of a Markov chain
@@ -454,13 +457,13 @@ class Info:
     """
     def advance(self):
         new_proba = [0]*2**(self.mem+1)
-        for state in range(2**(self.mem-1)):
-            prec_state1= state/2+2^self.mem
-            prec_state0 = state/2
+        for state in range(2**(self.mem)):
+            prec_state1= int(state/2)+2**(self.mem-1)
+            prec_state0 = int(state/2)
             trans = state % 2
             new_proba_state = self.proba_state(prec_state0)*self.proba_trans(prec_state0,trans)+self.proba_state(prec_state1)*self.proba_trans(prec_state1,trans)
             new_proba[2*state]=new_proba_state*self.proba_trans(state,0)
-            new_proba[2*state+1]=new_proba_state*self.proba_trans(state,1)
+            new_proba[2*state+1]=new_proba_state*(1-self.proba_trans(state,0))
         self.ls = new_proba
         return 1       
 
@@ -474,14 +477,12 @@ class Info:
     """
     def stablestate(self,precision=0.001, debug = False):
         flag = True
-        cpt = 0
         while(flag):
-            cpt = cpt+1
             mem = [ self.ls[j] for j in range(len(self.ls))]
             self.advance()
             flag=False
             for i in range(len(self.ls)):
-                if abs(self.ls[i] - mem[i]) > precision:
+                if abs(self.ls[i] - mem[i])*2**self.mem > precision:
                     flag = True
         self.stable_state= True
         return 1
@@ -507,7 +508,7 @@ class Info:
     """
     def markovxor(self, b):
 
-        proba_ls = [0]*(2^(self.mem+1))
+        proba_ls = [0]*(2**(self.mem+1))
 
         for s in range(len(self.ls)):
             sum = 0
@@ -564,27 +565,23 @@ def trng_entropy(alpha, f, memory, nxor, qualityfactor, debug=False):
         g = TimeFunction(0,1,precision, 1)
 
         g.TFgaussian(0, sqrt(qualityfactor[0]))
+        print(qualityfactor[0])
 
         root = TreeNode(f)
-        listleaves=[]
-        root.buildtree(memory,s0,s1,g,listleaves)
+        ll=[]
+        root.buildtree(memory+1,s0,s1,g,ll)
+        print("ll")
+        print(ll)
 
-        info = Info([], [], None, None)
-        node = info.treetomarkov(listleaves)
+        myinfo = Info(memory, [])
+        myinfo.treetomarkov(ll)
+        print(myinfo.entropy())
+        print(myinfo)
 
+        xorn = myinfo.nmarkovxor(nxor)
         if debug:
-            print("toto")
-            n=info.stablestate(precision = 0.001, debug = True)
-            print info.listnodes
-            print("tata")
-        else:
-            n=info.stablestate()
-
-
-        xorn = info.nmarkovxor(nxor)
-
-        if debug:
-            print xorn.listnodes
+            print(myinfo)
+            print(xorn)
     else:
         if len(qualityfactor) == 1:
             my_len = len(alpha)
@@ -611,26 +608,17 @@ def trng_entropy(alpha, f, memory, nxor, qualityfactor, debug=False):
 
                 root = TreeNode(f)
                 listleaves=[]
-                root.buildtree(memory,s0,s1,g,listleaves)
+                root.buildtree(memory+1,s0,s1,g,listleaves)
 
-                info = Info([], [], None, None)
+                info = Info(memory,[])
                 node = info.treetomarkov(listleaves)
-                
-
-                if debug:
-                    n=info.stablestate(precision=0.001, debug = True)
-                    print info.listnodes
-                else:
-                    n=info.stablestate()
-
 
                 if i == 0:
                     xorn = info
                 else:
                     xorn = xorn.markovxor(info)
-                if debug:
-                    print i,xorn.listnodes
-        return xorn.entropy()
+        
+    return xorn.entropy()
 
 
 """
