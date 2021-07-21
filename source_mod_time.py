@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import sys
 import math
+import copy
 import numpy as np
 from math import *
 
@@ -348,7 +349,7 @@ class TreeNode:
             prob_min, prob_max = f.TFsum(True)
             if (prob_max-prob_min)>epsilon:
                 print(prob_max-prob_min)
-                print("Warining the precision is not good enouth")
+                print("Warning the precision is not good enouth")
             moy=(prob_min+prob_max)/2
             if moy > 0.5:
                 if prob_max > 1:
@@ -415,7 +416,7 @@ class Info:
                 self.ls.append(2**(-self.mem)*(1-float(listleaves[i-1])))
                 if abs(listleaves[i] + listleaves[i-1] -1) > epsilon:
                     print(abs(listleaves[i] + listleaves[i-1] -1))
-                    print("Warining the precision is not good enouth")
+                    print("Warning the precision is not good enouth")
 
         return 1
     """
@@ -523,9 +524,11 @@ class Info:
     Compute the n times the xor of the self Markov chain
     """
     def nmarkovxor(self, n):
-        double = self
+        if not(self.stable_state):
+            self.stablestate()
+        double = copy.deepcopy(self)
         ntimes = None
-        while n >0 :
+        while n >0:
             if n%2 == 1:
                 if ntimes == None:
                     ntimes = double
@@ -565,23 +568,22 @@ def trng_entropy(alpha, f, memory, nxor, qualityfactor, debug=False):
         g = TimeFunction(0,1,precision, 1)
 
         g.TFgaussian(0, sqrt(qualityfactor[0]))
-        print(qualityfactor[0])
 
         root = TreeNode(f)
         ll=[]
+        if debug:
+            print("Build tree...")
         root.buildtree(memory+1,s0,s1,g,ll)
-        print("ll")
-        print(ll)
 
         myinfo = Info(memory, [])
         myinfo.treetomarkov(ll)
-        print(myinfo.entropy())
-        print(myinfo)
-
+        if debug:
+            print("Computing the xor")
         xorn = myinfo.nmarkovxor(nxor)
         if debug:
             print(myinfo)
             print(xorn)
+
     else:
         if len(qualityfactor) == 1:
             my_len = len(alpha)
@@ -607,16 +609,16 @@ def trng_entropy(alpha, f, memory, nxor, qualityfactor, debug=False):
                 g.TFgaussian(0, sqrt(qualityfactor[i]))
 
                 root = TreeNode(f)
-                listleaves=[]
-                root.buildtree(memory+1,s0,s1,g,listleaves)
+                ll=[]
+                root.buildtree(memory+1,s0,s1,g,ll)
 
-                info = Info(memory,[])
-                node = info.treetomarkov(listleaves)
+                myinfo = Info(memory,[])
+                myinfo.treetomarkov(ll)
 
                 if i == 0:
-                    xorn = info
+                    xorn = myinfo
                 else:
-                    xorn = xorn.markovxor(info)
+                    xorn = xorn.markovxor(myinfo)
         
     return xorn.entropy()
 
