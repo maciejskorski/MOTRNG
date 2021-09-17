@@ -383,6 +383,7 @@ class Info:
     INPUT :
     - mem : memory of the Markov chain
     - listlongstates : list of probability of memory+1 patterns
+    - stable_state : boolean which tells if the stable state has been computed
     """
     def __init__(self, mem, longstates, stable_state = False):
         self.mem = mem
@@ -457,15 +458,16 @@ class Info:
         self : with state updated
     """
     def advance(self):
-        new_proba = [0]*2**(self.mem+1)
-        for state in range(2**(self.mem)):
-            prec_state1= int(state/2)+2**(self.mem-1)
-            prec_state0 = int(state/2)
-            trans = state % 2
-            new_proba_state = self.proba_state(prec_state0)*self.proba_trans(prec_state0,trans)+self.proba_state(prec_state1)*self.proba_trans(prec_state1,trans)
-            new_proba[2*state]=new_proba_state*self.proba_trans(state,0)
-            new_proba[2*state+1]=new_proba_state*(1-self.proba_trans(state,0))
-        self.ls = new_proba
+        if self.mem > 0:
+            new_proba = [0]*2**(self.mem+1)
+            for state in range(2**(self.mem)):
+                prec_state1= int(state/2)+2**(self.mem-1)
+                prec_state0 = int(state/2)
+                trans = state % 2
+                new_proba_state = self.proba_state(prec_state0)*self.proba_trans(prec_state0,trans)+self.proba_state(prec_state1)*self.proba_trans(prec_state1,trans)
+                new_proba[2*state]=new_proba_state*self.proba_trans(state,0)
+                new_proba[2*state+1]=new_proba_state*(1-self.proba_trans(state,0))
+            self.ls = new_proba
         return 1       
 
     """
@@ -620,13 +622,13 @@ def trng_entropy(alpha, f, memory, nxor, qualityfactor, debug=False):
                 else:
                     xorn = xorn.markovxor(myinfo)
         
-    return xorn.entropy()
+    return xorn.entropy(), xorn
 
 
 """
 Compute a quality factor for a target entropy
 INPUT :
-    - alpha : the duty cycle of the elementary TRNG
+    - alpha : a list of duty cycle of the elementary TRNG
     - f : distribution of probability representing the knowledge of the attacker at the
       begining
     - memory : the memory of the markov chain that simulate the elementary TRNG
@@ -637,7 +639,6 @@ INPUT :
     - span : interval of wainting time to look for
     - target : target entropy
     - epsilon : precision
-    - precision : number of points of evaluation of the functions
 OUTPUT : the quality factor to obtain the target entropy at precision precision
 """
 def find_waiting_time(alpha, f, memory, nxor, slopes, span,target, epsilon=0.0001, debug=False):
@@ -655,8 +656,9 @@ def find_waiting_time(alpha, f, memory, nxor, slopes, span,target, epsilon=0.000
     if span[1] < span[0]:
         span = [span[1], span[0]]
     qualityfactor=spantoquality(span, slopes)
-    spane=[trng_entropy(alpha, f, memory, nxor, qualityfactor[0], debug), trng_entropy(alpha, f, memory,
-            nxor, qualityfactor[1], debug)]
+    ent1,_=trng_entropy(alpha, f, memory, nxor, qualityfactor[0], debug)
+    ent2,_=trng_entropy(alpha, f, memory, nxor, qualityfactor[1], debug)
+    spane=[ent1, ent2]
     if (target > spane[1]) or (target < spane[0]):
         print "Error, target not in the quality factor interval"
         print spane[0], spane[1], target
@@ -666,7 +668,7 @@ def find_waiting_time(alpha, f, memory, nxor, slopes, span,target, epsilon=0.000
             print spane[0], spane[1]
         nspan= span[0]+math.floor((span[1]-span[0])/2.0)
         qualityfactor=spantoquality([nspan], slopes)
-        newent=trng_entropy(alpha, f, memory, nxor, qualityfactor[0], debug)
+        newent,_=trng_entropy(alpha, f, memory, nxor, qualityfactor[0], debug)
         if target > newent:
             span=[nspan, span[1]]
             spane=[newent, spane[1]]
@@ -674,3 +676,51 @@ def find_waiting_time(alpha, f, memory, nxor, slopes, span,target, epsilon=0.000
             span=[span[0], nspan]
             spane=[spane[0], newent]
     return span, spane
+
+"""
+Compute a quality factor for a target entropy
+INPUT :
+    - alpha : a list of duty cycle of the elementary TRNG
+    - f : distribution of probability representing the knowledge of the attacker at the
+      begining
+    - memory : the memory of the markov chain that simulate the elementary TRNG
+    - nxor : number of branchs of elementary TRNG which are xored
+    - slopes : a list of slopes given by the internal method of CHESS 2014 (variance of the jitter
+      after T2 waiting time rescalled to 1)
+    if len(slopes)==1 we compute the entropy of nxor xor elementary TRNG
+    - span : interval of nxor to look for
+    - target : target entropy
+    - epsilon : precision
+OUTPUT : the number of xor to obtain the target entropy at precision precision
+"""
+def find_nxor(alpha, f, memory, quality, span,target, epsilon=0.0001, debug=False):
+    if span[1] < span[0]:
+        span = [span[1], span[0]]
+
+    spane = []
+    for i in range(2):
+        alpha_list = [alpha]*span[i]
+        quality_list = [quality]*span[i]
+        ent,_=trng_entropy(alpha_list, f, memory, span[0], quality_list, debug)
+        spane.append(ent)
+
+    if (target > spane[1]) or (target < spane[0]):
+        print "Error, target not in the quality factor interval"
+        print spane[0], spane[1], target
+        return None
+    while (spane[1]-spane[0]> epsilon) and (span[1]-span[0] > 1):
+        if debug:
+            print spane[0], spane[1]
+        nspan= int(span[0]+math.floor((span[1]-span[0])/2.0))
+        alpha_list = [alpha]*nspan
+        quality_list = [quality]*nspan
+        newent,_=trng_entropy(alpha_list, f, memory, nspan, quality_list, debug)
+        if target > newent:
+            span=[nspan, span[1]]
+            spane=[newent, spane[1]]
+        else:
+            span=[span[0], nspan]
+            spane=[spane[0], newent]
+    return span, spane
+
+

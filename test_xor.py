@@ -6,9 +6,9 @@ from math import *
 from source_mod_time import *
 
 alpha = 0.5
-memory = 4
+memory = 15
 precision = 1000
-sigma = 0.02
+sigma = 0.08
 
 s1 = TimeFunction(0,1,precision, 1)
 s1.TFsquare(alpha)
@@ -21,6 +21,14 @@ s0.scale = 1
 g = TimeFunction(0,1,precision, 1)
 g.TFgaussian(0, sigma)
 
+f = TimeFunction(0,1,precision, 1)
+f.TFdirac(0.25)
+g = TimeFunction(0,1,precision, 1)
+g.TFgaussian(0, sqrt(memory *sigma**2))
+f=f.TFconv(g)
+f = f.TFprod(s1)
+print("Accumulation interne")
+print(f.TFsum())
 
 sum = 0
 for i in range(2**memory):
@@ -34,28 +42,17 @@ for i in range(2**memory):
     if xor == 0:
         f = TimeFunction(0,1,precision, 1)
         f.TFdirac(0.25)
+        f.TFconst(1)
         for l in range(len(binstr)):
             f=f.TFconv(g)
             if binstr[l]== '0':
-                print("toto0")
                 f=f.TFprod(s0)
             else:
-                print("toto1")
                 f=f.TFprod(s1)
-        f.TFplot("temp/graph"+binstr+"txt")
+#        f.TFplot("temp/graph"+binstr+"txt")
         sum = sum + f.TFsum()
-print sum
-
-f = TimeFunction(0,1,precision, 1)
-f.TFdirac(0.25)
-g = TimeFunction(0,1,precision, 1)
-g.TFgaussian(0, sqrt(memory *sigma**2))
-f=f.TFconv(g)
-f = f.TFprod(s0)
-
-print f.TFsum()
-
-
+print("Accumulation avec xor")
+print(sum)
 
 
     
