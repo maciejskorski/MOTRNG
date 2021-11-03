@@ -581,6 +581,7 @@ def trng_entropy(alpha, f, memory, nxor, qualityfactor, debug=False):
         myinfo.treetomarkov(ll)
         if debug:
             print("Computing the xor")
+            print(nxor)
         xorn = myinfo.nmarkovxor(nxor)
         if debug:
             print(myinfo)
@@ -612,16 +613,24 @@ def trng_entropy(alpha, f, memory, nxor, qualityfactor, debug=False):
 
                 root = TreeNode(f)
                 ll=[]
+                if debug:
+                    print("Build tree...")
                 root.buildtree(memory+1,s0,s1,g,ll)
 
                 myinfo = Info(memory,[])
                 myinfo.treetomarkov(ll)
 
+                if debug:
+                    print("Computing the xor")
+                    print(i)
                 if i == 0:
-                    xorn = myinfo
+                    xorn = copy.deepcopy(myinfo)
                 else:
                     xorn = xorn.markovxor(myinfo)
-        
+                if debug:
+                    print(myinfo)
+                    print(xorn)
+
     return xorn.entropy(), xorn
 
 
@@ -699,9 +708,7 @@ def find_nxor(alpha, f, memory, quality, span,target, epsilon=0.0001, debug=Fals
 
     spane = []
     for i in range(2):
-        alpha_list = [alpha]*span[i]
-        quality_list = [quality]*span[i]
-        ent,_=trng_entropy(alpha_list, f, memory, span[0], quality_list, debug)
+        ent,_=trng_entropy(alpha, f, memory, span[i], quality, debug)
         spane.append(ent)
 
     if (target > spane[1]) or (target < spane[0]):
@@ -712,9 +719,7 @@ def find_nxor(alpha, f, memory, quality, span,target, epsilon=0.0001, debug=Fals
         if debug:
             print spane[0], spane[1]
         nspan= int(span[0]+math.floor((span[1]-span[0])/2.0))
-        alpha_list = [alpha]*nspan
-        quality_list = [quality]*nspan
-        newent,_=trng_entropy(alpha_list, f, memory, nspan, quality_list, debug)
+        newent,_=trng_entropy(alpha, f, memory, nspan, quality, debug)
         if target > newent:
             span=[nspan, span[1]]
             spane=[newent, spane[1]]
