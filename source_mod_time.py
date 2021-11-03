@@ -510,6 +510,10 @@ class Info:
     Compute the xor of two Markov chains
     """
     def markovxor(self, b):
+        if not(self.stable_state):
+            self.stablestate()
+        if not(b.stable_state):
+            b.stablestate()
 
         proba_ls = [0]*(2**(self.mem+1))
 
@@ -623,13 +627,14 @@ def trng_entropy(alpha, f, memory, nxor, qualityfactor, debug=False):
                 if debug:
                     print("Computing the xor")
                     print(i)
+
                 if i == 0:
                     xorn = copy.deepcopy(myinfo)
+                    print(myinfo.entropy())
                 else:
                     xorn = xorn.markovxor(myinfo)
                 if debug:
-                    print(myinfo)
-                    print(xorn)
+                    print(xorn.entropy())
 
     return xorn.entropy(), xorn
 
