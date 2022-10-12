@@ -8,20 +8,20 @@ from source_mod_time import *
 alpha=0.5
 memory = 0
 precision = 1000
-nxor = 1
-sigmaT = 3*10**-6
+nxor = 2
+sigmat = 2.5*10**-6
 D = 2000
 
 f = TimeFunction(0,1,precision, 1)
 f.TFdirac(0.25)
-print f.TFsum()
 
-ratio_slope = [D]*nxor
-ratio_slope = [facteur * i for i in ratio_slope]
+alpha_list = [alpha]
+ratio_slope_list = [sigmat]
+ratio_quality_list = [sigmat*D]
 
-ent,_ = trng_entropy([alpha], f, memory, nxor, ratio_slope, False)
+ent,_ = trng_entropy(alpha_list, f, memory, nxor, ratio_quality_list, True)
 print(ent)
 
+print find_waiting_time(alpha_list, f, memory, nxor, ratio_slope_list, [10000, 40000],
+        0.997, 0.000001, True)
 
-#print("Find waiting time")
-#print find_waiting_time([alpha], f, memory, nxor, ratio_slope, [20000, 50000], 0.997, 0.001, False)

@@ -44,7 +44,7 @@ class TimeFunction:
         step = l/float(self.prec)
         k= int(math.floor((x-self.min)/step))
         if debug:
-            print x,step, x/step, type(x/step),int(x/step), x/step-251.0, x-0.251, step-0.001
+            print(x,step, x/step, type(x/step),int(x/step), x/step-251.0, x-0.251, step-0.001)
         return self.val[k]
 
     """
@@ -110,7 +110,7 @@ class TimeFunction:
     """
     def TFprod(self, f):
         if (self.prec != f.prec) or (self.min != f.min) or (self.max != f.max):
-            print "Error"
+            print("Error")
             return 0
         else:
             f1 = TimeFunction(self.min, self.max, self.prec, self.scale)
@@ -150,7 +150,7 @@ class TimeFunction:
     """
     def TFadd(self, f):
         if (self.prec != f.prec) or (self.min != f.min) or (self.max != f.max):
-            print "Error"
+            print("Error")
             return 0
         else:
             f1 = TimeFunction(self.min, self.max, self.prec, self.scale)
@@ -169,7 +169,7 @@ class TimeFunction:
     """
     def TFmaxnorm(self,f):
         if (self.prec != f.prec) or (self.min != f.min) or (self.max != f.max):
-            print "Error"
+            print("Error")
             return 0
         else:
             my_max = 0
@@ -202,7 +202,7 @@ class TimeFunction:
                 f1.scale = f.scale*self.scale
             return f1
         else:
-            print "Bad precision of TFcon()"
+            print("Bad precision of TFcon()")
             return 0
 
     """
@@ -228,12 +228,12 @@ class TimeFunction:
             if debug:
                 f2=self.TFconvslow(f)
                 if f2.TFmaxnorm(f1) > epsilon:
-                    print "Warning TFconv may be false", f2.TFmaxnorm(f1)
+                    print("Warning TFconv may be false", f2.TFmaxnorm(f1))
                     f2.TFplot("f2.txt")
                     f1.TFplot("f1.txt")
             return f1
         else:
-            print "Bad precision of TFcon()"
+            print("Bad precision of TFcon()")
             return 0
 
     """
@@ -301,7 +301,7 @@ class TimeFunction:
             self.val=[0 for i in range(self.prec)]
             self.val[int(self.prec*x)]=self.prec
         else:
-            print "Error bad parameter in Dirac"
+            print("Error bad parameter in Dirac")
 
 """
 Tree class
@@ -599,7 +599,7 @@ def trng_entropy(alpha, f, memory, nxor, qualityfactor, debug=False):
             my_len = len(qualityfactor)
             alpha = [alpha[0] for i in range(my_len)]
         if len(qualityfactor) != len(alpha):
-            print "Error len(qualityfactor) != len(alpha)"
+            print("Error len(qualityfactor) != len(alpha)")
             return 0
         else:
             my_len = len(alpha)
@@ -674,12 +674,12 @@ def find_waiting_time(alpha, f, memory, nxor, slopes, span,target, epsilon=0.000
     ent2,_=trng_entropy(alpha, f, memory, nxor, qualityfactor[1], debug)
     spane=[ent1, ent2]
     if (target > spane[1]) or (target < spane[0]):
-        print "Error, target not in the quality factor interval"
-        print spane[0], spane[1], target
+        print("Error, target not in the quality factor interval")
+        print(spane[0], spane[1], target)
         return None
     while (spane[1]-spane[0] > epsilon) and (span[1]-span[0] >= 1):
         if debug:
-            print spane[0], spane[1]
+            print(spane[0], spane[1], span[0], span[1])
         nspan= span[0]+math.floor((span[1]-span[0])/2.0)
         qualityfactor=spantoquality([nspan], slopes)
         newent,_=trng_entropy(alpha, f, memory, nxor, qualityfactor[0], debug)
@@ -717,12 +717,12 @@ def find_nxor(alpha, f, memory, quality, span,target, epsilon=0.0001, debug=Fals
         spane.append(ent)
 
     if (target > spane[1]) or (target < spane[0]):
-        print "Error, target not in the quality factor interval"
-        print spane[0], spane[1], target
+        print("Error, target not in the quality factor interval")
+        print(spane[0], spane[1], target)
         return None
     while (spane[1]-spane[0]> epsilon) and (span[1]-span[0] > 1):
         if debug:
-            print spane[0], spane[1]
+            print(spane[0], spane[1])
         nspan= int(span[0]+math.floor((span[1]-span[0])/2.0))
         newent,_=trng_entropy(alpha, f, memory, nspan, quality, debug)
         if target > newent:
