@@ -22,6 +22,6 @@ ratio_quality_list = [sigmat*D]
 ent,_ = trng_entropy(alpha_list, f, memory, nxor, ratio_quality_list, True)
 print(ent)
 
-print find_waiting_time(alpha_list, f, memory, nxor, ratio_slope_list, [10000, 40000],
-        0.997, 0.000001, True)
+#print(find_waiting_time(alpha_list, f, memory, nxor, ratio_slope_list, [10000, 40000],
+#        0.997, 0.000001, True))
 
