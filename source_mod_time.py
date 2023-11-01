@@ -677,7 +677,7 @@ def find_waiting_time(alpha, f, memory, nxor, slopes, span,target, epsilon=0.000
         print("Error, target not in the quality factor interval")
         print(spane[0], spane[1], target)
         return None
-    while (spane[1]-spane[0] > epsilon) and (span[1]-span[0] >= 1):
+    while (spane[1]-spane[0] > epsilon) and (span[1]-span[0] >= 2):
         if debug:
             print(spane[0], spane[1], span[0], span[1])
         nspan= span[0]+math.floor((span[1]-span[0])/2.0)
