@@ -25,24 +25,24 @@ g.TFgaussian(0, 0.01)
 
 for i in range(avance):
     f = f.TFconv(g)
-    print f.TFsum()
+    print(f.TFsum())
     f1 = f.TFprod(s1)
     sum1= f1.TFsum()
     f0 = f.TFprod(s0)
     f1.TFplot("testf1"+str(i)+".txt")
     f0.TFplot("testf0"+str(i)+".txt")
     sum0= f0.TFsum()
-    print "probabilite 1"
-    print sum1
-    print "probabilite 0"
-    print sum0
+    print("probabilite 1")
+    print(sum1)
+    print("probabilite 0")
+    print(sum0)
     if sum1 > sum0:
         f=f1
         f.scale = f.scale /sum1
     else:
         f=f0
         f.scale = f.scale /sum0
-    print f.TFsum()
+    print(f.TFsum())
     f.TFplot("test"+str(i)+".txt")
 
 

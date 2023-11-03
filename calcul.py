@@ -26,8 +26,8 @@ for i in range(1,100):
     pente = 2.16*10**-6
 
     variance = pente*i*10
-    print "KD = ", i*10
-    print variance, sqrt(variance)
+    print("KD = ", i*10)
+    print(variance, sqrt(variance))
     g = TimeFunction(-1,1,1000, 1)
     g.TFgaussian(0, 0.02)
 
@@ -40,4 +40,4 @@ for i in range(1,100):
     matrix = info.markovtomatrix()
     n=info.stablestate()
     xorn = info.nmarkovxor(29)
-    print xorn.entropy()
+    print(xorn.entropy())
